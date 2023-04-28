@@ -3,6 +3,7 @@
 struct Agent {
 	float2 position;
 	float angle;
+	float2 velocity;
 	int4 speciesMask;
 	int speciesIndex;
 };
@@ -89,6 +90,7 @@ void Update (uint3 id : SV_DispatchThreadID)
 	uint random = hash(pos.y * width + pos.x + hash(id.x + time * 100000));
 
 	// Steer based on sensory data
+	// float sensorAngleRad = settings.sensorAngleDegrees * (3.1415 / 180);
 	float sensorAngleRad = settings.sensorAngleDegrees * (3.1415 / 180);
 	float weightForward = sense(agent, settings, 0);
 	float weightLeft = sense(agent, settings, sensorAngleRad);
@@ -117,7 +119,22 @@ void Update (uint3 id : SV_DispatchThreadID)
 
 	// Update position
 	float2 direction = float2(cos(agent.angle), sin(agent.angle));
-	float2 newPos = agent.position + direction * deltaTime * settings.moveSpeed;
+
+	float2 sunLoc = float2(width/2, height/2);
+	
+	float distanceSquared = length(agent.position - sunLoc);
+
+	float2 gravVec = (agent.position - sunLoc)/length(agent.position - sunLoc);
+	float2 gravForce = gravVec * 200/distanceSquared;
+
+	
+
+	float2 newPos = agent.position + gravForce * deltaTime * settings.moveSpeed;
+	newPos.x += 5.0;
+
+
+	
+
 
 	
 	// Clamp position to map boundaries, and pick new random move dir if hit boundary
